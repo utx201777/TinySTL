@@ -10,6 +10,7 @@
 ## set
 1. 底层使用BST实现，后面会改成AVL树或者RB树，空间配置使用`SimpleAllocate.h`
 2. 提供前后访问的迭代器
+3. 已经改用AVL树实现
 
 ## stack
 1. 底层使用`vector`，封装只有尾部可以读写。

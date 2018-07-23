@@ -14,20 +14,17 @@ namespace TinySTL
 		typedef AVLTree<T> tree_type;
 		typedef tree_type * tree_ptr;
 		typedef typename tree_type::iterator iterator;
-		typedef typename tree_type::size_type size_type;
-		typedef SimpleAllocate<tree_type> alloc;
+		typedef typename tree_type::size_type size_type;		
 	protected:
 		tree_ptr tree;
 	public:
 		MySet()
 		{
-			tree = alloc::allocate(1);
-			alloc::construct(tree, tree_type());
+			tree = new tree_type();
 		}
 		~MySet()
 		{
-			alloc::destroy(tree);
-			alloc::deallocate(tree, 1);
+			delete tree;
 		}
 		size_type size()
 		{
@@ -45,13 +42,17 @@ namespace TinySTL
 		{
 			return tree->end();
 		}
+		bool exist(value_type value)
+		{
+			return find(value) != end();
+		}
 		iterator find(value_type value)
 		{
 			return tree->find(value);
 		}
-		bool erase(value_type value)
+		void erase(value_type value)
 		{
-			return tree->erase(value);
+			tree->erase(value);
 		}
 		void insert(value_type value)
 		{

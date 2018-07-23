@@ -9,7 +9,7 @@ namespace TinySTL
 		typedef T value_type;
 		typedef size_t size_type;
 		typedef AVLTree_Node<T> * node_ptr;
-		size_type height;
+		int height;
 		value_type key;		
 		node_ptr _left;
 		node_ptr _right;
@@ -27,7 +27,7 @@ namespace TinySTL
 	{
 		if (r==nullptr)
 			return -1;
-		return r->height;
+ 		return r->height;
 	}
 
 	template<class T>
@@ -127,17 +127,16 @@ namespace TinySTL
 
 	template<class T>
 	AVLTree_Node<T>* insertAVLTree(AVLTree_Node<T> *&root, AVLTree_Node<T> *parent, T value)
-	{
-		typedef SimpleAllocate<AVLTree_Node<T>> alloc;
+	{		
 		if (root == nullptr)
 		{			
-			root = alloc::allocate(1);			
+			root = new AVLTree_Node<T>();
 			root->key = value;
 			root->_parent = parent;
 		}
 		else
 		{
-			if (root->key < value)
+			if (root->key > value)
 			{
 				root->_left = insertAVLTree(root->_left, root, value);
 				root->_left->_parent = root;
@@ -155,7 +154,7 @@ namespace TinySTL
 					}
 				}				
 			}
-			else if (root->key > value)
+			else if (root->key < value)
 			{
 				root->_right = insertAVLTree(root->_right, root, value);
 				root->_right->_parent = root;
@@ -192,7 +191,7 @@ namespace TinySTL
 	}
 
 	template<class T>
-	AVLTree_Node<T> Fix(AVLTree_Node<T> root)
+	AVLTree_Node<T>* Fix(AVLTree_Node<T>* root)
 	{
 		if (Height(root->_left) > Height(root->_right))
 		{
@@ -215,8 +214,7 @@ namespace TinySTL
 
 	template<class T>
 	AVLTree_Node<T>* deleteAVLNode(AVLTree_Node<T> *&root, AVLTree_Node<T>*parent, T value)
-	{
-		typedef SimpleAllocate<AVLTree_Node<T>> alloc;
+	{		
 		AVLTree_Node<T> * ptr;
 		if (root == nullptr)
 			return nullptr;
@@ -227,23 +225,27 @@ namespace TinySTL
 			{
 				ptr = findMin(root->_right);
 				root->key = ptr->key;
-				r->_right = deleteAVLNode(root->_right, root, root->key);				
+				root->_right = deleteAVLNode(root->_right, root, root->key);				
 			}
 			else
 			{
 				ptr = root;
-				if (r->_left != nullptr)
+				if (root->_left != nullptr)
 				{
 					root = root->_left;
 					root->_parent = parent;
 				}					
-				else if (r->_right != nullptr)
+				else if (root->_right != nullptr)
 				{
 					root = root->_right;
 					root->_parent = parent;
-				}									
-				alloc::destroy(ptr);
-				alloc::deallocate(ptr);
+				}
+				else
+				{
+					root = nullptr;
+					// 这时候需要把root置nullptr，否则指向的内存以及被释放了会出错
+				}
+				delete ptr;
 				ptr = nullptr;
 			}			
 		}

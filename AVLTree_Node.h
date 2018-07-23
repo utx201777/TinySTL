@@ -10,7 +10,7 @@ namespace TinySTL
 		typedef size_t size_type;
 		typedef AVLTree_Node<T> * node_ptr;
 		size_type height;
-		value_type key;
+		value_type key;		
 		node_ptr _left;
 		node_ptr _right;
 		node_ptr _parent;
@@ -58,7 +58,7 @@ namespace TinySTL
 	AVLTree_Node<T>* doubleRotatoRight(AVLTree_Node<T>*root);
 
 	template<class T>
-	AVLTree_Node<T>* insertAVLTree(AVLTree_Node<T> *&root, AVLTree_Node<T> *&root, T value);
+	AVLTree_Node<T>* insertAVLTree(AVLTree_Node<T> *&root, AVLTree_Node<T> *parent, T value);
 
 	template<class T>
 	AVLTree_Node<T>* findMin(AVLTree_Node<T> * root);
@@ -67,7 +67,7 @@ namespace TinySTL
 	AVLTree_Node<T> Fix(AVLTree_Node<T> root);
 
 	template<class T>
-	AVLTree_Node<T>* deleteAVLNode(AVLTree_Node<T> *&root, T value);
+	AVLTree_Node<T>* deleteAVLNode(AVLTree_Node<T> *&root, AVLTree_Node<T>*parent, T value);
 
 	template<class T>
 	void MidTraverse(AVLTree_Node<T> *root);
@@ -85,11 +85,13 @@ namespace TinySTL
 	AVLTree_Node<T> * singleRotateLeft(AVLTree_Node<T>* root)
 	{
 		typedef AVLTree_Node<T> * node_ptr;
-		node_ptr * tmp = root->_left;	// 旋转的部分
+		node_ptr tmp = root->_left;	// 旋转的部分
 		root->_left = tmp->_right;
+		tmp->_right->_parent = root;	
 		tmp->_right = root;
-		root->height = max<int>(Height(root->_left), Height(root->_right));
-		tmp->height = max<int>(Height(tmp->_left), Height(tmp->_right));
+		root->_parent = tmp;
+		root->height = max<int>(Height(root->_left), Height(root->_right))+1;
+		tmp->height = max<int>(Height(tmp->_left), Height(tmp->_right))+1;
 		return tmp;
 	}
 
@@ -97,11 +99,13 @@ namespace TinySTL
 	AVLTree_Node<T> * singleRotateRight(AVLTree_Node<T>*root)
 	{
 		typedef AVLTree_Node<T> * node_ptr;
-		node_ptr * tmp = root->_right;
+		node_ptr tmp = root->_right;
 		root->_right = tmp->_left;
+		tmp->_left->_parent = root;
 		tmp->_left = root;
-		root->height = max<int>(Height(root->_left), Height(root->_right));
-		tmp->height = max<int>(Height(tmp->_left), Height(tmp->_right));
+		root->_parent = tmp;
+		root->height = max<int>(Height(root->_left), Height(root->_right))+1;
+		tmp->height = max<int>(Height(tmp->_left), Height(tmp->_right))+1;
 		return tmp;
 	}
 
@@ -109,24 +113,25 @@ namespace TinySTL
 	AVLTree_Node<T>* doubleRotateLeft(AVLTree_Node<T>*root)
 	{		
 		root->_left = singleRotateRight(root->_left);
+		root->_left->_parent = root;
 		return singleRotateLeft(root);
 	}
 
 	template<class T>
 	AVLTree_Node<T>* doubleRotatoRight(AVLTree_Node<T>*root)
 	{
-		root->_right = singleRotateLeft(root->right);
+		root->_right = singleRotateLeft(root->_right);
+		root->_right->_parent = root;
 		return singleRotateRight(root);
 	}
 
 	template<class T>
-	AVLTree_Node<T>* insertAVLTree(AVLTree_Node<T> *&root, AVLTree_Node<T> *&root, T value)
+	AVLTree_Node<T>* insertAVLTree(AVLTree_Node<T> *&root, AVLTree_Node<T> *parent, T value)
 	{
 		typedef SimpleAllocate<AVLTree_Node<T>> alloc;
 		if (root == nullptr)
-		{
-			root = alloc::allocate(1);
-			alloc::construct(root, AVLTree_Node<T>());
+		{			
+			root = alloc::allocate(1);			
 			root->key = value;
 			root->_parent = parent;
 		}
@@ -135,29 +140,43 @@ namespace TinySTL
 			if (root->key < value)
 			{
 				root->_left = insertAVLTree(root->_left, root, value);
+				root->_left->_parent = root;
 				if (Height(root->_left) - Height(root->_right) >= 2)
 				{
 					if (root->_left->key < value)
-						root = doubleRotatoLeft(root);
+					{					
+						root = doubleRotateLeft(root);
+						root->_parent = parent;
+					}
 					else
+					{
 						root = singleRotateLeft(root);
+						root->_parent = parent;
+					}
 				}				
 			}
 			else if (root->key > value)
 			{
 				root->_right = insertAVLTree(root->_right, root, value);
+				root->_right->_parent = root;
 				if (Height(root->_right) - Height(root->_left) >= 2)
 				{
 					if (root->_right->key < value)
+					{
 						root = doubleRotatoRight(root);
+						root->_parent = parent;
+					}
 					else
+					{
 						root = singleRotateRight(root);
+						root->_parent = parent;
+					}
 				}
 			}
 			else
-				return root;	// 不插入
+				return root;
 		}
-		root->height = max<int>(Height(r->left), Height(r->right)) + 1;
+		root->height = max<int>(Height(root->_left), Height(root->_right)) + 1;
 		return root;
 	}
 
@@ -177,7 +196,7 @@ namespace TinySTL
 	{
 		if (Height(root->_left) > Height(root->_right))
 		{
-			//K2左儿子的左儿子的高度大于K2的左儿子的右儿子的高度, 执行左单旋转, 否则执行左-右双旋转
+			//左儿子的左儿子的高度大于左儿子的右儿子的高度, 执行左单旋转, 否则执行左-右双旋转
 			if (Height(root->_left->_left) > Height(root->_left->_right))
 				root = singleRotateLeft(root);
 			else if (Height(root->_left->_left) < Height(root->_left->_right))
@@ -185,13 +204,12 @@ namespace TinySTL
 		}
 		else if (Height(root->_left) < Height(root->_right))
 		{
-			//K2右儿子的右儿子的高度大于K2的右儿子的左儿子的高度, 执行右单旋转, 否则执行右-左双旋转
+			//右儿子的右儿子的高度大于右儿子的左儿子的高度, 执行右单旋转, 否则执行右-左双旋转
 			if (Height(root->_right->_right) > Height(root->_right->_left))
 				root = singleRotateRight(root);
 			else if (Height(root->_right->_right) < Height(root->_right->_left))
 				root = doubleRotatoRight(root);
 		}
-
 		return root;
 	}
 
@@ -209,7 +227,7 @@ namespace TinySTL
 			{
 				ptr = findMin(root->_right);
 				root->key = ptr->key;
-				r->_right = deleteAVLNode(root->_right, root->key);
+				r->_right = deleteAVLNode(root->_right, root, root->key);				
 			}
 			else
 			{
@@ -226,15 +244,15 @@ namespace TinySTL
 				}									
 				alloc::destroy(ptr);
 				alloc::deallocate(ptr);
-				prt = nullptr;
+				ptr = nullptr;
 			}			
 		}
 		else
 		{
 			if (root->key < value)
-				root->_right = deleteAVLNode(root->_right, value);
+				root->_right = deleteAVLNode(root->_right, root, value);
 			else
-				root->_left = deleteAVLNode(root->_left, value);
+				root->_left = deleteAVLNode(root->_left, root, value);
 		}
 		if (root)
 		{
@@ -242,6 +260,7 @@ namespace TinySTL
 			if (abs<int>(Height(root->_left) - Height(root->_right))>=2)
 			{
 				root = Fix(root);
+				root->_parent = parent;
 				root->height = max<int>(Height(root->_left), Height(root->_right)) + 1;
 			}
 		}
@@ -370,5 +389,4 @@ namespace TinySTL
 		ptr = findPre(ptr);
 		return *this;
 	}
-
 }

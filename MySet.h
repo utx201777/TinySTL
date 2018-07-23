@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SimpleAllocate.h"
+#include "AVLTree.h"
 #include "BSTree.h"
 
 namespace TinySTL
@@ -10,14 +11,24 @@ namespace TinySTL
 	{
 	public:
 		typedef T value_type;
-		typedef BSTree<T> * bstree_ptr;
-		typedef BSTree<T> bstree;
-		typedef typename BSTree<T>::iterator iterator;
-		typedef typename BSTree<T>::size_type size_type;
+		typedef AVLTree<T> tree_type;
+		typedef tree_type * tree_ptr;
+		typedef typename tree_type::iterator iterator;
+		typedef typename tree_type::size_type size_type;
+		typedef SimpleAllocate<tree_type> alloc;
 	protected:
-		bstree_ptr tree;
+		tree_ptr tree;
 	public:
-		MySet() :tree(new bstree()) {}
+		MySet()
+		{
+			tree = alloc::allocate(1);
+			alloc::construct(tree, tree_type());
+		}
+		~MySet()
+		{
+			alloc::destroy(tree);
+			alloc::deallocate(tree, 1);
+		}
 		size_type size()
 		{
 			return tree->size();
@@ -42,9 +53,9 @@ namespace TinySTL
 		{
 			return tree->erase(value);
 		}
-		bool insert(value_type value)
+		void insert(value_type value)
 		{
-			return tree->insert(value);
+			tree->insert(value);
 		}
 	};
 }

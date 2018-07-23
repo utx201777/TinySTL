@@ -11,20 +11,28 @@ namespace TinySTL
 		typedef AVLTree_Node_Iterator<T> iterator;
 		typedef typename iterator::node_type node_type;
 		typedef typename iterator::node_type* node_ptr;
+		typedef typename iterator::node_type*& node_reference;
 		typedef size_t size_type;
+		typedef SimpleAllocate<node_type> alloc;
 	protected:
 		node_ptr head;
 		size_type size_;
-		node_ptr &root()
+		node_reference root()
 		{
-			return head->_parent;
+			return head->_right;
 		}
 	public:
-		// head的parant存储的是根节点，left存储的是begin节点，end节点为空结点
-		BSTree()
+		// head的right存储的是根节点，left存储的是begin节点，end节点为空结点
+		AVLTree()
 		{
-			head = new node_type();
+			head = alloc::allocate(1);			
+			alloc::construct(head, node_type());			
 			size_ = 0;
+		}
+		~AVLTree()
+		{
+			alloc::destroy(head);
+			alloc::deallocate(head, 1);
 		}
 		size_type size()
 		{
@@ -42,27 +50,25 @@ namespace TinySTL
 		{
 			return iterator(nullptr);
 		}
-		bool insert(value_type value)
+		void insert(value_type value)
 		{
-			bool f = insertAVLTree<T>(root(), nullptr, value);
+			insertAVLTree<T>(root(), head, value);
 			auto r = root();
 			while (r != nullptr && r->_left != nullptr)
 				r = r->_left;
 			head->_left = r;		// 更新begin()
-			++size_;
-			return f;
+			++size_;			
 		}
-		bool erase(value_type value)
+		void erase(value_type value)
 		{
-			bool f = deleteAVLNode<T>(root(), value);
+			deleteAVLNode<T>(root(), head, value);
 			auto r = root();
 			if (r == nullptr)
-				head->_left = nullptr;
+				head->_left = nullptr;			// 已经没有节点了
 			while (r != nullptr && r->_left != nullptr)
 				r = r->_left;
 			head->_left = r;
-			--size_;
-			return f;
+			--size_;			
 		}
 		iterator find(value_type value)
 		{

@@ -2,6 +2,7 @@
 #define _ALLOC_H_
 
 #include <cstdlib>
+#include <cstdio>
 
 namespace TinySTL{
 

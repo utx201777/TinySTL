@@ -12,18 +12,20 @@ namespace TinySTL
 		typedef typename iterator::node_type node_type;
 		typedef typename iterator::node_type* node_ptr;
 		typedef size_t size_type;
+		typedef SimpleAllocate<node_type> alloc;
 	protected:
 		node_ptr head;
 		size_type size_;
 		node_ptr &BSTree<T>::root()
 		{
-			return head->_parent;
+			return head->_right;
 		}
 	public:
 		// head的parant存储的是根节点，left存储的是begin节点，end节点为空结点
 		BSTree()
 		{
-			head = new node_type();
+			head = alloc::allocate(1);
+			alloc::construct(head, node_type());			
 			size_ = 0;
 		}
 		size_type size()
@@ -44,7 +46,7 @@ namespace TinySTL
 		}
 		bool insert(value_type value)
 		{
-			bool f = insertBST<T>(root(), nullptr, value);
+			bool f = insertBST<T>(root(), head, value);
 			auto r = root();
 			while (r != nullptr && r->_left != nullptr)
 				r = r->_left;

@@ -13,14 +13,14 @@ namespace TinySTL
 	void *alloc::allocate(size_t bytes){
 		if (bytes > EMaxBytes::MAXBYTES){
 			return malloc(bytes);
-		}
+		}		
 		size_t index = FREELIST_INDEX(bytes);
 		obj *list = free_list[index];
 		if (list){//此list还有空间给我们
 			free_list[index] = list->next;
 			return list;
 		}
-		else{//此list没有足够的空间，需要从内存池里面取空间
+		else{//此list没有足够的空间，需要从内存池里面取空间			
 			return refill(ROUND_UP(bytes));
 		}
 	}

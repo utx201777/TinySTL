@@ -2,7 +2,7 @@
 
 #include <cstring>
 #include <iostream>
-
+#include "SimpleAllocate.h"
 namespace TinySTL
 {
 	const unsigned MAXSIZE = 10000;
@@ -13,22 +13,23 @@ namespace TinySTL
 		typedef value_type * pointer;
 		typedef value_type * iterator;
 		typedef value_type & reference;
+		typedef SimpleAllocate<value_type> alloc;
 		MyString(const char * str = nullptr)
 		{
 			if (str == nullptr)
 			{
-				data = new char[1];
+				data = alloc::allocate(1);
 				data[0] = '\0';
 			}
 			else
-			{
-				data = new char[strlen(str) + 1];
+			{				
+				data = alloc::allocate(strlen(str) + 1);
 				strcpy(data, str);		// 会拷贝
 			}
 		}
 		MyString(MyString &s)
 		{
-			data = new char[strlen(s.data) + 1];
+			data = alloc::allocate(strlen(s.data) + 1);			
 			strcpy(data, s.data);
 		}
 		value_type operator[](unsigned index)
@@ -57,15 +58,20 @@ namespace TinySTL
 		MyString operator + (MyString &s)
 		{
 			MyString tmp;
-			char * tmp_data = new char[strlen(data) + strlen(s.data) + 1];
+			char * tmp_data = alloc::allocate(strlen(data) + strlen(s.data) + 1);
 			strcpy(tmp_data, data);
 			strcpy(tmp_data + strlen(data), s.data);
 			tmp.data = tmp_data;
 			return tmp;
-		}		
-		~MyString()
+		}
+		MyString operator+(const char * str)
 		{
-			delete[]data;
+			MyString tmp(str);
+			return *this + tmp;
+		}
+		~MyString()
+		{			
+			SimpleAllocate<char>::deallocate(data, strlen(data) + 1);
 		}
 		friend std::ostream &operator<<(std::ostream & onfs, const MyString & s);
 		friend std::istream &operator >> (std::istream & infs, MyString &s);
@@ -80,13 +86,15 @@ namespace TinySTL
 	}
 	std::istream &operator >> (std::istream & infs, MyString &s)
 	{
-		char * data = new char[MAXSIZE];
+		typedef char value_type;
+		typedef SimpleAllocate<value_type> alloc;
+		char * data = alloc::allocate(MAXSIZE);
 		infs.getline(data, MAXSIZE);
 		MyString tmp;
 		tmp.data = s.data;		// 释放前面的
-		s.data = new char[strlen(data) + 1];
+		s.data = alloc::allocate(strlen(data) + 1);
 		strcpy(s.data, data);
-		delete []data;
+		alloc::deallocate(data, MAXSIZE);
 		return infs;
 	}
 }

@@ -64,7 +64,7 @@ namespace TinySTL
 	AVLTree_Node<T>* findMin(AVLTree_Node<T> * root);
 
 	template<class T>
-	AVLTree_Node<T> Fix(AVLTree_Node<T> root);
+	AVLTree_Node<T>* Fix(AVLTree_Node<T> *root);
 
 	template<class T>
 	AVLTree_Node<T>* deleteAVLNode(AVLTree_Node<T> *&root, AVLTree_Node<T>*parent, T value);
